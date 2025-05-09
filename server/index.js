@@ -2,8 +2,8 @@ import cors from "cors";
 import express from "express";
 import morgan from "morgan";
 import opcua from "node-opcua";
-
-const PORT = 3001;
+import dotenv from "dotenv";
+dotenv.config();
 
 // Create application
 const app = express();
@@ -39,8 +39,8 @@ app.get("/", (req, res) => {
 });
 
 // Activate server
-app.listen(PORT, () => {
-  console.log(`Server started on http://localhost:${PORT}`);
+app.listen(process.env.API_PORT, () => {
+  console.log(`Server started on http://localhost:${process.env.API_PORT}`);
 });
 
 // OPC UA Client

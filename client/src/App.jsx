@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from "react";
+import { Fragment, useState } from "react";
 import { Unity, useUnityContext } from "react-unity-webgl";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
@@ -35,11 +35,11 @@ function App() {
     fetchData(isLeft ? "move-right" : "move-left");
     setIsLeft(!isLeft);
   };
-
+  console.log("URL: ", import.meta.env.VITE_API_URL);
   const fetchData = async (operation) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/${operation}`
+        `${import.meta.env.VITE_API_URL}/${operation}`
       );
       const data = await response.json();
       console.log("Data fetched:", data);
