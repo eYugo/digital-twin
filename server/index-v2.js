@@ -32,13 +32,11 @@ const io = new socketIo(server, {
 });
 
 // === OPC UA Client Initialization ===
-const client = await connectToOPCUAServer();
+const client = await connectToOPCUAServer(endpointUrl);
 let session, subscription;
 
 (async () => {
   try {
-    await client.connect(endpointUrl);
-
     session = await createSession(client);
     console.log("✅ OPC UA session created");
 
