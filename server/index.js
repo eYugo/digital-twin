@@ -17,6 +17,7 @@ import {
   nodeIdToSensor,
   readAllSensors,
 } from "./service.js";
+import cors from "cors";
 
 // === OPC UA Setup ===
 const endpointUrl = process.env.OPCUA_ENDPOINT;
@@ -30,6 +31,7 @@ const io = new socketIo(server, {
     methods: ["GET", "POST"],
   },
 });
+app.use(cors());
 
 // === OPC UA Client Initialization ===
 const client = await connectToOPCUAServer(endpointUrl);
@@ -57,11 +59,8 @@ let session, subscription;
 
     // Define nodes to monitor
     const nodesToMonitor = [
-      // { nodeId: sensors.I1, attributeId: opcua.AttributeIds.Value },
       { nodeId: sensors.I2, attributeId: opcua.AttributeIds.Value },
-      // { nodeId: sensors.I3, attributeId: opcua.AttributeIds.Value },
       { nodeId: sensors.I4, attributeId: opcua.AttributeIds.Value },
-      // { nodeId: sensors.I5, attributeId: opcua.AttributeIds.Value },
       { nodeId: sensors.I6, attributeId: opcua.AttributeIds.Value },
     ];
 
@@ -193,28 +192,6 @@ process.on("SIGINT", async () => {
 // === Start Server ===
 server.listen(process.env.API_PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running at port: ${process.env.API_PORT}`);
-});
-
-app.get("/api/control/:action", async (req, res) => {
-  const action = req.params.action;
-  console.log("Requested action:", action);
-
-  switch (action) {
-    case "move-right":
-      return await moveRight(res, session);
-    case "move-left":
-      return await moveLeft(res, session);
-    case "move-up":
-      return await moveUp(res, session);
-    case "move-down":
-      return await moveDown(res, session);
-    case "open-claw":
-      return await openClaw(res, session);
-    case "close-claw":
-      return await closeClaw(res, session);
-    default:
-      return res.status(400).json({ error: "Invalid movement type" });
-  }
 });
 
 app.get("/api/read/all", async (req, res) => {

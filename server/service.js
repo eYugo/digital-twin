@@ -11,11 +11,8 @@ const actuators = {
 };
 
 export const sensors = {
-  // I1: 'ns=3;s="I1"',
   I2: 'ns=3;s="I2"',
-  // I3: 'ns=3;s="I3"',
   I4: 'ns=3;s="I4"',
-  // I5: 'ns=3;s="I5"',
   I6: 'ns=3;s="I6"',
 };
 export function connectToOPCUAServer(endpointUrl) {
@@ -48,26 +45,23 @@ export function createSession(client) {
   });
 }
 
-async function tryWriteNodes(session, res, nodesToWrite, operationName) {
+async function tryWriteNodes(session, nodesToWrite, operationName) {
   try {
     const statusCodes = await session.write(nodesToWrite);
     if (statusCodes[0].isGood()) {
-      console.log("Write successful!");
-      return res.status(200).json({ message: `${operationName} successful` });
+      console.log(`${operationName} successful`);
     } else {
-      console.error("Write failed. Status Code: ", statusCodes[0].toString());
-      return res.status(500).json({
-        error: `${operationName} failed`,
-        statusCode: statusCodes[0].toString(),
-      });
+      console.error(
+        `${operationName}  failed. Status Code: `,
+        statusCodes[0].toString()
+      );
     }
   } catch (error) {
     console.error(`Error during ${operationName}:`, error);
-    return res.status(500).json({ error: "Internal server error" });
   }
 }
 
-export async function moveRight(res, session) {
+export async function moveRight(session) {
   console.log("Moving right");
   const nodesToWrite = [
     {
@@ -91,16 +85,10 @@ export async function moveRight(res, session) {
       },
     },
   ];
-  const response = await tryWriteNodes(
-    session,
-    res,
-    nodesToWrite,
-    "Move Right"
-  );
-  return response;
+  await tryWriteNodes(session, nodesToWrite, "Move Right");
 }
 
-export async function moveLeft(res, session) {
+export async function moveLeft(session) {
   console.log("Moving left");
   const nodesToWrite = [
     {
@@ -124,11 +112,10 @@ export async function moveLeft(res, session) {
       },
     },
   ];
-  const response = await tryWriteNodes(session, res, nodesToWrite, "Move Left");
-  return response;
+  await tryWriteNodes(session, nodesToWrite, "Move Left");
 }
 
-export async function moveUp(res, session) {
+export async function moveUp(session) {
   console.log("Moving up");
   const nodesToWrite = [
     {
@@ -152,10 +139,9 @@ export async function moveUp(res, session) {
       },
     },
   ];
-  const response = await tryWriteNodes(session, res, nodesToWrite, "Move Up");
-  return response;
+  await tryWriteNodes(session, nodesToWrite, "Move Up");
 }
-export async function moveDown(res, session) {
+export async function moveDown(session) {
   console.log("Moving down");
   const nodesToWrite = [
     {
@@ -179,10 +165,9 @@ export async function moveDown(res, session) {
       },
     },
   ];
-  const response = await tryWriteNodes(session, res, nodesToWrite, "Move Down");
-  return response;
+  await tryWriteNodes(session, nodesToWrite, "Move Down");
 }
-export async function openClaw(res, session) {
+export async function openClaw(session) {
   console.log("Opening claw");
   const nodesToWrite = [
     {
@@ -206,9 +191,9 @@ export async function openClaw(res, session) {
       },
     },
   ];
-  const response = await tryWriteNodes(session, res, nodesToWrite, "Open Claw");
+  await tryWriteNodes(session, nodesToWrite, "Open Claw");
 }
-export async function closeClaw(res, session) {
+export async function closeClaw(session) {
   console.log("Closing claw");
   const nodesToWrite = [
     {
@@ -232,22 +217,13 @@ export async function closeClaw(res, session) {
       },
     },
   ];
-  const response = await tryWriteNodes(
-    session,
-    res,
-    nodesToWrite,
-    "Close Claw"
-  );
-  return response;
+  await tryWriteNodes(session, nodesToWrite, "Close Claw");
 }
 
 export async function readAllSensors(session) {
   const nodesToRead = [
-    // { nodeId: sensors.I1, attributeId: opcua.AttributeIds.Value },
     { nodeId: sensors.I2, attributeId: opcua.AttributeIds.Value },
-    // { nodeId: sensors.I3, attributeId: opcua.AttributeIds.Value },
     { nodeId: sensors.I4, attributeId: opcua.AttributeIds.Value },
-    // { nodeId: sensors.I5, attributeId: opcua.AttributeIds.Value },
     { nodeId: sensors.I6, attributeId: opcua.AttributeIds.Value },
   ];
 
@@ -255,7 +231,7 @@ export async function readAllSensors(session) {
 
   // Format the response
   const sensorData = dataValues.map((dataValue, index) => ({
-    sensor: `I${index + 1}`,
+    sensor: `I${index + 2}`,
     value: dataValue.value.value,
   }));
 
