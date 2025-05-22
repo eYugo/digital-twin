@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import { Card, Row, Col, Container, Button } from "react-bootstrap";
 import { io } from "socket.io-client";
+import { handleSensorData } from "./utils";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
