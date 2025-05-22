@@ -16,9 +16,9 @@ function App() {
       codeUrl: "unityBuild/Build/unityBuild.wasm",
     });
 
-  const [horizontalSensor, setHorizontalSensor] = useState("I1");
-  const [verticalSensor, setVerticalSensor] = useState("I3");
-  const [clawSensor, setClawSensor] = useState("I5");
+  const [horizontalSensor, setHorizontalSensor] = useState(false);
+  const [verticalSensor, setVerticalSensor] = useState(false);
+  const [clawSensor, setClawSensor] = useState(false);
   const [socket, setSocket] = useState(null);
   // Initialize WebSocket connection
 
@@ -30,36 +30,42 @@ function App() {
     newSocket.on("sensorData", (data) => {
       console.log("Initial sensor data received:", data);
       data.forEach((sensorData) => {
-        if (sensorData.sensor === "I1" && sensorData.value) {
-          setHorizontalSensor("I1");
-          if (isLoaded)
-            sendMessage("Mobile parts", "DirectionController", "left");
-        }
-        if (sensorData.sensor === "I2" && sensorData.value) {
-          setHorizontalSensor("I2");
-          if (isLoaded)
-            sendMessage("Mobile parts", "DirectionController", "right");
-        }
-        if (sensorData.sensor === "I3" && sensorData.value) {
-          setVerticalSensor("I3");
-          if (isLoaded) sendMessage("Vertical", "DirectionController", "up");
-        }
-        if (sensorData.sensor === "I4" && sensorData.value) {
-          setVerticalSensor("I4");
-          if (isLoaded) sendMessage("Vertical", "DirectionController", "down");
-        }
-        if (sensorData.sensor === "I5" && sensorData.value) {
-          setClawSensor("I5");
+        if (sensorData.sensor === "I2" && sensorData.value === false) {
           if (isLoaded) {
-            sendMessage("Pivot 1", "HookController", "open");
-            sendMessage("Pivot 2", "HookController", "open");
+            setHorizontalSensor(false);
+            sendMessage("Mobile parts", "DirectionController", "left");
           }
         }
-        if (sensorData.sensor === "I6" && sensorData.value) {
-          setClawSensor("I6");
+        if (sensorData.sensor === "I2" && sensorData.value === true) {
           if (isLoaded) {
+            setHorizontalSensor(true);
+            sendMessage("Mobile parts", "DirectionController", "right");
+          }
+        }
+        if (sensorData.sensor === "I4" && sensorData.value === false) {
+          if (isLoaded) {
+            setVerticalSensor(false);
+            sendMessage("Vertical", "DirectionController", "down");
+          }
+        }
+        if (sensorData.sensor === "I4" && sensorData.value === true) {
+          if (isLoaded) {
+            setVerticalSensor(true);
+            sendMessage("Vertical", "DirectionController", "up");
+          }
+        }
+        if (sensorData.sensor === "I6" && sensorData.value === false) {
+          if (isLoaded) {
+            setClawSensor(false);
             sendMessage("Pivot 1", "HookController", "close");
             sendMessage("Pivot 2", "HookController", "close");
+          }
+        }
+        if (sensorData.sensor === "I6" && sensorData.value === true) {
+          if (isLoaded) {
+            setClawSensor(true);
+            sendMessage("Pivot 1", "HookController", "open");
+            sendMessage("Pivot 2", "HookController", "open");
           }
         }
       });
@@ -67,41 +73,35 @@ function App() {
 
     // Listen for real-time sensor updates
     newSocket.on("sensorUpdate", (data) => {
-      console.log(
-        "Loading Progression (inside new socket): ",
-        loadingProgression
-      );
-      console.log("Is Loaded (inside new socket):", isLoaded);
-      console.log(`Sensor ${data.sensor} updated:`, data.value);
-      if (data.sensor === "I1" && data.value) {
+      if (data.sensor === "I2" && data.value === false) {
         if (isLoaded) {
-          setHorizontalSensor("I1");
+          setHorizontalSensor(false);
           sendMessage("Mobile parts", "DirectionController", "left");
         }
       }
-      if (data.sensor === "I2" && data.value) {
+      if (data.sensor === "I2" && data.value === true) {
         if (isLoaded) {
-          setHorizontalSensor("I2");
+          setHorizontalSensor(true);
           sendMessage("Mobile parts", "DirectionController", "right");
         }
       }
-      if (data.sensor === "I3" && data.value) {
-        setVerticalSensor("I3");
-        sendMessage("Vertical", "DirectionController", "up");
-      }
-      if (data.sensor === "I4" && data.value) {
-        setVerticalSensor("I4");
+      if (data.sensor === "I4" && data.value === false) {
+        setVerticalSensor(false);
         sendMessage("Vertical", "DirectionController", "down");
       }
-      if (data.sensor === "I5" && data.value) {
-        setClawSensor("I5");
-        sendMessage("Pivot 1", "HookController", "open");
-        sendMessage("Pivot 2", "HookController", "open");
+      if (data.sensor === "I4" && data.value === true) {
+        setVerticalSensor(true);
+        sendMessage("Vertical", "DirectionController", "up");
       }
-      if (data.sensor === "I6" && data.value) {
-        setClawSensor("I6");
+      if (data.sensor === "I6" && data.value === false) {
+        setClawSensor(false);
         sendMessage("Pivot 1", "HookController", "close");
         sendMessage("Pivot 2", "HookController", "close");
+      }
+      if (data.sensor === "I6" && data.value === true) {
+        setClawSensor(true);
+        sendMessage("Pivot 1", "HookController", "open");
+        sendMessage("Pivot 2", "HookController", "open");
       }
     });
 
@@ -111,9 +111,9 @@ function App() {
     };
   }, [isLoaded, sendMessage]);
 
-  const isOpen = clawSensor === "I5";
-  const isLeft = horizontalSensor === "I1";
-  const isUp = verticalSensor === "I3";
+  const isOpen = clawSensor === true;
+  const isLeft = horizontalSensor === false;
+  const isUp = verticalSensor === true;
 
   const handleHookButtonClick = () => {
     sendMessage("Pivot 1", "HookController", isOpen ? "close" : "open");
@@ -122,7 +122,7 @@ function App() {
     socket.emit("control", {
       action: isOpen ? "close-claw" : "open-claw",
     });
-    setClawSensor(isOpen ? "I6" : "I5");
+    setClawSensor(isOpen ? false : true);
   };
 
   const handleHorizontalClick = () => {
@@ -135,7 +135,7 @@ function App() {
     socket.emit("control", {
       action: isLeft ? "move-right" : "move-left",
     });
-    setHorizontalSensor(isLeft ? "I2" : "I1");
+    setHorizontalSensor(isLeft ? true : false);
   };
 
   const handleVerticalClick = () => {
@@ -144,7 +144,59 @@ function App() {
     socket.emit("control", {
       action: isUp ? "move-down" : "move-up",
     });
-    setVerticalSensor(isUp ? "I4" : "I3");
+    setVerticalSensor(isUp ? false : true);
+  };
+
+  const handleSyncPositionClick = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/read/all`
+      );
+      const data = await response.json();
+      console.log("Data fetched:", data);
+      data.forEach((sensorData) => {
+        if (sensorData.sensor === "I2" && sensorData.value === false) {
+          if (isLoaded) {
+            setHorizontalSensor(false);
+            sendMessage("Mobile parts", "DirectionController", "left");
+          }
+        }
+        if (sensorData.sensor === "I2" && sensorData.value === true) {
+          if (isLoaded) {
+            setHorizontalSensor(true);
+            sendMessage("Mobile parts", "DirectionController", "right");
+          }
+        }
+        if (sensorData.sensor === "I4" && sensorData.value === false) {
+          if (isLoaded) {
+            setVerticalSensor(false);
+            sendMessage("Vertical", "DirectionController", "down");
+          }
+        }
+        if (sensorData.sensor === "I4" && sensorData.value === true) {
+          if (isLoaded) {
+            setVerticalSensor(true);
+            sendMessage("Vertical", "DirectionController", "up");
+          }
+        }
+        if (sensorData.sensor === "I6" && sensorData.value === false) {
+          if (isLoaded) {
+            setClawSensor(false);
+            sendMessage("Pivot 1", "HookController", "close");
+            sendMessage("Pivot 2", "HookController", "close");
+          }
+        }
+        if (sensorData.sensor === "I6" && sensorData.value === true) {
+          if (isLoaded) {
+            setClawSensor(true);
+            sendMessage("Pivot 1", "HookController", "open");
+            sendMessage("Pivot 2", "HookController", "open");
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   };
 
   return (
@@ -203,11 +255,18 @@ function App() {
           </Row>
           <Row className="mt-4">
             <Col>
+              <Button
+                onClick={handleSyncPositionClick}
+                variant="secondary"
+                className="mx-4 px-5 "
+              >
+                Sync Position
+              </Button>
               <h3>Sensor Data</h3>
               <ul>
-                <li key="1&2">Horizontal sensor: {horizontalSensor}</li>
-                <li key="3&4">Vertical sensor: {verticalSensor}</li>
-                <li key="5&6">Claw sensor: {clawSensor}</li>
+                <li key="2">Horizontal sensor: {horizontalSensor}</li>
+                <li key="4">Vertical sensor: {verticalSensor}</li>
+                <li key="6">Claw sensor: {clawSensor}</li>
               </ul>
             </Col>
           </Row>

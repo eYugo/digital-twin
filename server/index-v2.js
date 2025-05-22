@@ -26,7 +26,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN,
+    origin: true,
     methods: ["GET", "POST"],
   },
 });
@@ -59,11 +59,11 @@ let session, subscription;
 
     // Define nodes to monitor
     const nodesToMonitor = [
-      { nodeId: sensors.I1, attributeId: opcua.AttributeIds.Value },
+      // { nodeId: sensors.I1, attributeId: opcua.AttributeIds.Value },
       { nodeId: sensors.I2, attributeId: opcua.AttributeIds.Value },
-      { nodeId: sensors.I3, attributeId: opcua.AttributeIds.Value },
+      // { nodeId: sensors.I3, attributeId: opcua.AttributeIds.Value },
       { nodeId: sensors.I4, attributeId: opcua.AttributeIds.Value },
-      { nodeId: sensors.I5, attributeId: opcua.AttributeIds.Value },
+      // { nodeId: sensors.I5, attributeId: opcua.AttributeIds.Value },
       { nodeId: sensors.I6, attributeId: opcua.AttributeIds.Value },
     ];
 
@@ -96,24 +96,7 @@ io.on("connection", (socket) => {
   // Automatically read all sensors and send initial data to the client
   (async () => {
     try {
-      const nodesToRead = [
-        { nodeId: sensors.I1, attributeId: opcua.AttributeIds.Value },
-        { nodeId: sensors.I2, attributeId: opcua.AttributeIds.Value },
-        { nodeId: sensors.I3, attributeId: opcua.AttributeIds.Value },
-        { nodeId: sensors.I4, attributeId: opcua.AttributeIds.Value },
-        { nodeId: sensors.I5, attributeId: opcua.AttributeIds.Value },
-        { nodeId: sensors.I6, attributeId: opcua.AttributeIds.Value },
-      ];
-
-      const dataValues = await session.read(nodesToRead);
-
-      // Format the response
-      const sensorData = dataValues.map((dataValue, index) => ({
-        sensor: `I${index + 1}`,
-        value: dataValue.value.value, // check what is the value
-      }));
-
-      // Emit initial sensor data to the newly connected client
+      const sensorData = await readAllSensors(session);
       socket.emit("sensorData", sensorData);
     } catch (error) {
       console.error("Error reading sensors on connection:", error);
@@ -133,50 +116,26 @@ io.on("connection", (socket) => {
         case "move-left":
           await moveLeft(session);
           socket.emit("controlResponse", { success: true, action });
-          // io.emit("sensorUpdate", {
-          //   sensor: "I1",
-          //   value: true,
-          // });
           break;
         case "move-right":
           await moveRight(session);
           socket.emit("controlResponse", { success: true, action });
-          // io.emit("sensorUpdate", {
-          //   sensor: "I2",
-          //   value: true,
-          // });
           break;
         case "move-up":
           await moveUp(session);
           socket.emit("controlResponse", { success: true, action });
-          // io.emit("sensorUpdate", {
-          //   sensor: "I3",
-          //   value: true,
-          // });
           break;
         case "move-down":
           await moveDown(session);
           socket.emit("controlResponse", { success: true, action });
-          // io.emit("sensorUpdate", {
-          //   sensor: "I4",
-          //   value: true,
-          // });
           break;
         case "open-claw":
           await openClaw(session);
           socket.emit("controlResponse", { success: true, action });
-          // io.emit("sensorUpdate", {
-          //   sensor: "I5",
-          //   value: true,
-          // });
           break;
         case "close-claw":
           await closeClaw(session);
           socket.emit("controlResponse", { success: true, action });
-          // io.emit("sensorUpdate", {
-          //   sensor: "I6",
-          //   value: true,
-          // });
           break;
         default:
           socket.emit("controlResponse", {
@@ -193,32 +152,17 @@ io.on("connection", (socket) => {
     }
   });
 
-  // // Handle request to read all sensors
-  // socket.on("readAllSensors", async () => {
-  //   try {
-  //     const nodesToRead = [
-  //       { nodeId: sensors.I1, attributeId: opcua.AttributeIds.Value },
-  //       { nodeId: sensors.I2, attributeId: opcua.AttributeIds.Value },
-  //       { nodeId: sensors.I3, attributeId: opcua.AttributeIds.Value },
-  //       { nodeId: sensors.I4, attributeId: opcua.AttributeIds.Value },
-  //       { nodeId: sensors.I5, attributeId: opcua.AttributeIds.Value },
-  //       { nodeId: sensors.I6, attributeId: opcua.AttributeIds.Value },
-  //     ];
+  // Handle request to read all sensors
+  socket.on("readAllSensors", async () => {
+    try {
+      const sensorData = await readAllSensors(dataValues);
 
-  //     const dataValues = await session.read(nodesToRead);
-
-  //     // Format the response
-  //     const sensorData = dataValues.map((dataValue, index) => ({
-  //       sensor: `I${index + 1}`,
-  //       value: dataValue.value.value,
-  //     }));
-
-  //     socket.emit("sensorData", sensorData);
-  //   } catch (error) {
-  //     console.error("Error reading sensors:", error);
-  //     socket.emit("sensorDataError", { error: "Failed to read sensors" });
-  //   }
-  // });
+      socket.emit("sensorData", sensorData);
+    } catch (error) {
+      console.error("Error reading sensors:", error);
+      socket.emit("sensorDataError", { error: "Failed to read sensors" });
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("A client disconnected");
@@ -249,8 +193,8 @@ process.on("SIGINT", async () => {
 });
 
 // === Start Server ===
-server.listen(process.env.API_PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${process.env.API_PORT}`);
+server.listen(process.env.API_PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running at port: ${process.env.API_PORT}`);
 });
 
 app.get("/api/control/:action", async (req, res) => {
@@ -276,5 +220,11 @@ app.get("/api/control/:action", async (req, res) => {
 });
 
 app.get("/api/read/all", async (req, res) => {
-  return await readAllSensors(session);
+  try {
+    const sensorData = await readAllSensors(session);
+    return res.status(200).json(sensorData);
+  } catch (error) {
+    console.error("Error reading sensors:", error);
+    return res.status(500).json({ error: "Failed to read sensors" });
+  }
 });

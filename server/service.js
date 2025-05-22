@@ -11,11 +11,11 @@ const actuators = {
 };
 
 export const sensors = {
-  I1: 'ns=3;s="I1"',
+  // I1: 'ns=3;s="I1"',
   I2: 'ns=3;s="I2"',
-  I3: 'ns=3;s="I3"',
+  // I3: 'ns=3;s="I3"',
   I4: 'ns=3;s="I4"',
-  I5: 'ns=3;s="I5"',
+  // I5: 'ns=3;s="I5"',
   I6: 'ns=3;s="I6"',
 };
 export function connectToOPCUAServer(endpointUrl) {
@@ -99,6 +99,7 @@ export async function moveRight(res, session) {
   );
   return response;
 }
+
 export async function moveLeft(res, session) {
   console.log("Moving left");
   const nodesToWrite = [
@@ -126,6 +127,7 @@ export async function moveLeft(res, session) {
   const response = await tryWriteNodes(session, res, nodesToWrite, "Move Left");
   return response;
 }
+
 export async function moveUp(res, session) {
   console.log("Moving up");
   const nodesToWrite = [
@@ -239,30 +241,25 @@ export async function closeClaw(res, session) {
   return response;
 }
 
-export async function readAllSensors(session, res) {
-  try {
-    const nodesToRead = [
-      { nodeId: sensors.I1, attributeId: opcua.AttributeIds.Value },
-      { nodeId: sensors.I2, attributeId: opcua.AttributeIds.Value },
-      { nodeId: sensors.I3, attributeId: opcua.AttributeIds.Value },
-      { nodeId: sensors.I4, attributeId: opcua.AttributeIds.Value },
-      { nodeId: sensors.I5, attributeId: opcua.AttributeIds.Value },
-      { nodeId: sensors.I6, attributeId: opcua.AttributeIds.Value },
-    ];
+export async function readAllSensors(session) {
+  const nodesToRead = [
+    // { nodeId: sensors.I1, attributeId: opcua.AttributeIds.Value },
+    { nodeId: sensors.I2, attributeId: opcua.AttributeIds.Value },
+    // { nodeId: sensors.I3, attributeId: opcua.AttributeIds.Value },
+    { nodeId: sensors.I4, attributeId: opcua.AttributeIds.Value },
+    // { nodeId: sensors.I5, attributeId: opcua.AttributeIds.Value },
+    { nodeId: sensors.I6, attributeId: opcua.AttributeIds.Value },
+  ];
 
-    const dataValues = await session.read(nodesToRead);
+  const dataValues = await session.read(nodesToRead);
 
-    // Format the response
-    const sensorData = dataValues.map((dataValue, index) => ({
-      sensor: `I${index + 1}`,
-      value: dataValue.value.value,
-    }));
+  // Format the response
+  const sensorData = dataValues.map((dataValue, index) => ({
+    sensor: `I${index + 1}`,
+    value: dataValue.value.value,
+  }));
 
-    return res.status(200).json(sensorData);
-  } catch (error) {
-    console.error("Error reading sensors:", error);
-    return res.status(500).json({ error: "Failed to read sensors" });
-  }
+  return sensorData;
 }
 
 export const nodeIdToSensor = Object.fromEntries(
