@@ -132,7 +132,9 @@ function App() {
                   <iframe
                     width="100%"
                     height="500vh"
-                    src="https://www.youtube.com/embed/txD1wp5sUNI"
+                    src={`https://www.youtube.com/embed/${
+                      import.meta.env.VITE_YOUTUBE_LIVE_ID
+                    }`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   ></iframe>
