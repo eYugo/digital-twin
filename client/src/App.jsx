@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect } from "react";
+import React, { Fragment, useState, useEffect } from "react";
 import { Unity, useUnityContext } from "react-unity-webgl";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
@@ -24,7 +24,7 @@ function App() {
   // Initialize WebSocket connection
 
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_API_URL); // Connect to the WebSocket server
+    const newSocket = io(import.meta.env.VITE_API_URL);
     setSocket(newSocket);
 
     // Listen for initial sensor data
@@ -54,7 +54,6 @@ function App() {
       );
     });
 
-    // Cleanup on component unmount
     return () => {
       newSocket.disconnect();
     };
@@ -96,28 +95,6 @@ function App() {
     setVerticalSensor(isUp ? false : true);
   };
 
-  const handleSyncPositionClick = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/read/all`
-      );
-      const data = await response.json();
-      console.log("Data fetched:", data);
-      data.forEach((sensorData) => {
-        handleSensorData(
-          sensorData,
-          isLoaded,
-          setHorizontalSensor,
-          setVerticalSensor,
-          setClawSensor,
-          sendMessage
-        );
-      });
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-
   return (
     <ErrorBoundary>
       <Container
@@ -153,10 +130,11 @@ function App() {
                 <Card.Body className="d-flex flex-column">
                   <Card.Title>Live Stream</Card.Title>
                   <iframe
-                    src="https://player.twitch.tv/?channel=gaules&parent=localhost"
                     width="100%"
-                    height="50vh"
-                    className="border rounded flex-grow-1"
+                    height="500vh"
+                    src="https://www.youtube.com/embed/txD1wp5sUNI"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
                   ></iframe>
                 </Card.Body>
               </Card>
@@ -184,17 +162,6 @@ function App() {
                 className="mx-4 px-5 "
               >
                 {isUp ? "Down" : "Up"}
-              </Button>
-            </Col>
-          </Row>
-          <Row className="mt-4">
-            <Col>
-              <Button
-                onClick={handleSyncPositionClick}
-                variant="secondary"
-                className="mx-4 px-5 "
-              >
-                Sync Position
               </Button>
             </Col>
           </Row>
