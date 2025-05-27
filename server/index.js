@@ -42,7 +42,6 @@ let session, subscription;
     session = await createSession(client);
     console.log("✅ OPC UA session created");
 
-    // Create subscription
     subscription = opcua.ClientSubscription.create(session, {
       requestedPublishingInterval: 1000,
       requestedLifetimeCount: 100,
@@ -57,14 +56,12 @@ let session, subscription;
       .on("keepalive", () => console.log("📶 Keepalive"))
       .on("terminated", () => console.log("🛑 Subscription terminated"));
 
-    // Define nodes to monitor
     const nodesToMonitor = [
       { nodeId: sensors.I2, attributeId: opcua.AttributeIds.Value },
       { nodeId: sensors.I4, attributeId: opcua.AttributeIds.Value },
       { nodeId: sensors.I6, attributeId: opcua.AttributeIds.Value },
     ];
 
-    // Monitor each node
     for (const node of nodesToMonitor) {
       const monitoredItem = await subscription.monitor(
         node,
@@ -77,7 +74,6 @@ let session, subscription;
         const sensor = nodeIdToSensor[node.nodeId] || node.nodeId;
         console.log(`📥 Sensor ${sensor} updated:`, value);
 
-        // Emit to all connected clients
         io.emit("sensorUpdate", { sensor, value });
       });
     }
@@ -86,11 +82,10 @@ let session, subscription;
   }
 })();
 
-// WebSocket connection
+// === Web Socket connection ===
 io.on("connection", (socket) => {
   console.log("A client connected");
 
-  // Automatically read all sensors and send initial data to the client
   (async () => {
     try {
       const sensorData = await readAllSensors(session);
@@ -103,7 +98,6 @@ io.on("connection", (socket) => {
     }
   })();
 
-  // Handle control commands (e.g., move-right, move-left)
   socket.on("control", async (data) => {
     const { action } = data;
     console.log("Control command received:", action);
@@ -112,27 +106,21 @@ io.on("connection", (socket) => {
       switch (action) {
         case "move-left":
           await moveLeft(session);
-          socket.emit("controlResponse", { success: true, action });
           break;
         case "move-right":
           await moveRight(session);
-          socket.emit("controlResponse", { success: true, action });
           break;
         case "move-up":
           await moveUp(session);
-          socket.emit("controlResponse", { success: true, action });
           break;
         case "move-down":
           await moveDown(session);
-          socket.emit("controlResponse", { success: true, action });
           break;
         case "open-claw":
           await openClaw(session);
-          socket.emit("controlResponse", { success: true, action });
           break;
         case "close-claw":
           await closeClaw(session);
-          socket.emit("controlResponse", { success: true, action });
           break;
         default:
           socket.emit("controlResponse", {
@@ -140,6 +128,7 @@ io.on("connection", (socket) => {
             error: "Invalid action",
           });
       }
+      socket.emit("controlResponse", { success: true, action });
     } catch (error) {
       console.error("Error processing control command:", error);
       socket.emit("controlResponse", {
@@ -149,10 +138,9 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle request to read all sensors
   socket.on("readAllSensors", async () => {
     try {
-      const sensorData = await readAllSensors(dataValues);
+      const sensorData = await readAllSensors(session);
 
       socket.emit("sensorData", sensorData);
     } catch (error) {
@@ -166,7 +154,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// Graceful shutdown
+// === Graceful shutdown ===
 process.on("SIGINT", async () => {
   console.log("Shutting down server...");
 
